@@ -93,6 +93,7 @@ const gameBoard = (function createBoard() {
         if (advtg[1] == "bot" || advtg[1] == "player") {
             position[advtg[0]].owner = "bot";
             position[advtg[0]].control.textContent = "X";
+            position[advtg[0]].control.style.color = "green";
         }
         else {
             while (position[rand].owner.length != 0) {
@@ -100,6 +101,7 @@ const gameBoard = (function createBoard() {
             }
             position[rand].owner = "bot";
             position[rand].control.textContent = "X";
+            position[rand].control.style.color = "green";
         } 
         spareSpace++;
         if (winDet.detFull()) setTimeout(() => announceWinner(winDet.detFull()), 500);
@@ -124,11 +126,12 @@ const gameBoard = (function createBoard() {
         position[tmp].control.addEventListener("click", function(e) {
             if (e.target.textContent.length == 0) {
                 e.target.textContent = "O";
+                e.target.style.color = "red";
                 position[tmp].owner = "player";
                 spareSpace++;
                 if (winDet.detFull()) setTimeout(() => announceWinner(winDet.detFull()), 500);
                 else if (spareSpace == 9) setTimeout(() => announceWinner("Tie"), 500);
-                else botMove();
+                else setTimeout(() => botMove(), 100);
             };
         });
     }
@@ -143,6 +146,7 @@ function announceWinner(winner) {
     }
     else popup.textContent = `The winner is ${winner}`;
     popup.style.position = "absolute";
+    popup.style.fontWeight = "700";
     popup.style.backgroundColor = "white";
     popup.style.border = "2px solid black";
     popup.style.display = "flex";

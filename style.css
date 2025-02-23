@@ -5,6 +5,7 @@
 body {
     min-height: 100vh;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
 }
@@ -18,4 +19,8 @@ body {
 
 .board div:hover {
     background-color: rgb(209, 204, 204);
+}
+
+.title {
+    font-weight: 700;
 }
