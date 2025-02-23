@@ -160,8 +160,9 @@ const gameBoard = (function createBoard() {
         position[i].owner = "";
         position[i].control = document.createElement("div");
         position[i].control.setAttribute("class", "position");
-        position[i].control.style.width = "30px";
-        position[i].control.style.height = "30px";
+        position[i].control.style.width = "4rem";
+        position[i].control.style.height = "4rem";
+        position[i].control.style.fontSize = "2rem";
         position[i].control.style.border = "1px solid black";
         position[i].control.style.display = "flex";
         position[i].control.style.justifyContent = "center";
@@ -198,8 +199,8 @@ function announceWinner(winner) {
     popup.style.display = "flex";
     popup.style.justifyContent = "center";
     popup.style.alignItems = "center";
-    popup.style.fontSize = "0.5rem";
+    popup.style.fontSize = "1rem";
     body.appendChild(popup);
-    popup.style.width = "120px";
-    popup.style.height = "80%";
+    popup.style.width = "14rem";
+    popup.style.height = "14rem";
 }
