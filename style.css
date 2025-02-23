@@ -15,3 +15,7 @@ body {
     grid-template-rows: repeat(3, 1fr);
     gap: 1px;
 }
+
+.board div:hover {
+    background-color: rgb(209, 204, 204);
+}
