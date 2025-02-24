@@ -11,14 +11,14 @@ class line {
         let arr = [this.i1, this.i2, this.i3];
         for (let j = 0; j < 3; j++) {
             if (gameBoard.position[arr[j]].owner == "player") cntPlayer++;
-            if (gameBoard.position[arr[j]].owner == "bot") cntBot++;
+            else if (gameBoard.position[arr[j]].owner == "bot") cntBot++;
         }
         cnt = Math.max(cntBot, cntPlayer);
         return cnt;
     }
     // return the total number of filled square and the prevalent
     status(gameBoard) {
-        let cntPlayer = 0, cntBot = 0, cnt = 0;
+        let cntPlayer = 0, cntBot = 0;
         let arr = [this.i1, this.i2, this.i3];
         for (let j = 0; j < 3; j++) {
             if (gameBoard.position[arr[j]].owner == "player") cntPlayer++;
@@ -85,6 +85,7 @@ const winDet = (() => {
             let statusDiag;
             if (k <= 1) statusDiag = diag[k].status(gameBoard);
 
+            // the bot prioritizes winning over blocking
             let tmp1 = detWinBot(statusRow, row, k);
             let tmp2 = detWinBot(statusCol, col, k);
             let tmp3 = detWinBot(statusDiag, diag, k);
@@ -94,9 +95,8 @@ const winDet = (() => {
             else if (tmp2[1] != null) altOpt = tmp2;
             if (k <= 1 && tmp3[1] == "bot") return tmp3;
             else if (k <= 1 && tmp3[1] != null) altOpt = tmp3;
-            if (k == 2 && altOpt != null) return altOpt;
         }
-        return [null, null];
+        return altOpt;
     };
     return {detFull, detAdvtg};
 })();
@@ -110,19 +110,15 @@ const gameBoard = (function createBoard() {
         if (spareSpace >= 9) return;
         let rand = Math.floor(Math.random() * 9);
         let advtg = winDet.detAdvtg();
-        // block or win
+        // block or win if possible
         if (advtg[1] == "bot" || advtg[1] == "player") {
-            position[advtg[0]].owner = "bot";
-            position[advtg[0]].control.textContent = "X";
-            position[advtg[0]].control.style.color = "green";
+            tickSquare("bot", advtg[0], gameBoard);
         }
+        // strategic moves when there is no danger
         else {
             // take the center for advantages
             if (position[4].owner.length == 0) {
-                rand = 4;
-                position[rand].owner = "bot";
-                position[rand].control.textContent = "X";
-                position[rand].control.style.color = "green";
+                tickSquare("bot", 4, gameBoard);
             }
             // take the four side squares for advantages
             else {
@@ -131,9 +127,7 @@ const gameBoard = (function createBoard() {
                 for (let t = 0; t < 4; t++) {
                     let designation = position[diagSquareIndex[t]].owner;
                     if (designation.length == 0) {
-                        position[diagSquareIndex[t]].owner = "bot";
-                        position[diagSquareIndex[t]].control.textContent = "X";
-                        position[diagSquareIndex[t]].control.style.color = "green";
+                        tickSquare("bot", diagSquareIndex[t], gameBoard);
                         strategy = false;
                         break;
                     }
@@ -143,18 +137,22 @@ const gameBoard = (function createBoard() {
                     while (position[rand].owner.length != 0) {
                         rand = Math.floor(Math.random() * 9);
                     }
-                    position[rand].owner = "bot";
-                    position[rand].control.textContent = "X";
-                    position[rand].control.style.color = "green";
+                    tickSquare("bot", rand, gameBoard);
                 }
             }
         } 
         spareSpace++;
-        if (winDet.detFull()) setTimeout(() => announceWinner(winDet.detFull()), 500);
-        else if (spareSpace >= 9) setTimeout(() => announceWinner("Tie"), 500);
+        if (winDet.detFull()) {
+            setTimeout(() => announceWinner(winDet.detFull()), 500);
+            spareSpace = 0;
+        }
+        else if (spareSpace >= 9) {
+            setTimeout(() => announceWinner("Tie"), 500);
+            spareSpace = 0;
+        }
     };
 
-    for (i = 0; i < 9; i++) {
+    for (let i = 0; i < 9; i++) {
         // dynamically create squares
         position[i] = {};
         position[i].owner = "";
@@ -172,17 +170,21 @@ const gameBoard = (function createBoard() {
         let tmp = i;
         position[tmp].control.addEventListener("click", function(e) {
             if (e.target.textContent.length == 0) {
-                position[tmp].control.textContent = "O";
-                position[tmp].control.style.color = "red";
-                position[tmp].owner = "player";
+                tickSquare("player", tmp, gameBoard);
                 spareSpace++;
-                if (winDet.detFull()) setTimeout(() => announceWinner(winDet.detFull()), 500);
-                else if (spareSpace == 9) setTimeout(() => announceWinner("Tie"), 500);
+                if (winDet.detFull()) {
+                    setTimeout(() => announceWinner(winDet.detFull()), 500);
+                    spareSpace = 0;
+                }
+                else if (spareSpace == 9) {
+                    setTimeout(() => announceWinner("Tie"), 500);
+                    spareSpace = 0;
+                }
                 else setTimeout(() => botMove(tmp), 100);
             };
         });
     }
-    return {board, position};
+    return {board, position, spareSpace};
 })();
 
 function announceWinner(winner) {
@@ -197,10 +199,54 @@ function announceWinner(winner) {
     popup.style.backgroundColor = "white";
     popup.style.border = "2px solid black";
     popup.style.display = "flex";
+    popup.style.flexDirection = "column";
     popup.style.justifyContent = "center";
     popup.style.alignItems = "center";
     popup.style.fontSize = "1rem";
     body.appendChild(popup);
     popup.style.width = "14rem";
     popup.style.height = "14rem";
+
+    // create a delete pop-up
+    let reset = document.createElement("button");
+    reset.style.fontSize = "0.5rem";
+    reset.style.border = "1px solid black";
+    reset.style.margin = "5px";
+    reset.style.borderRadius = "5px";
+    reset.style.backgroundColor = "#24a0ed";
+    reset.textContent = "Want to play again?"
+    reset.style.color = "white";
+    reset.addEventListener("click", () => resetBoard(gameBoard, popup, reset));
+    reset.addEventListener("mouseover", () => {
+        reset.style.backgroundColor = "rgb(7, 94, 156)";
+    });
+    reset.addEventListener("mouseout", () => {
+        reset.style.backgroundColor = "#24a0ed";
+    });
+    popup.appendChild(reset);
+}
+
+// tick a square 
+function tickSquare(owner, index, gameBoard) {
+    if (owner == "player") {
+        gameBoard.position[index].control.textContent = "O";
+        gameBoard.position[index].control.style.color = "red";
+        gameBoard.position[index].owner = "player";
+    }
+    else if (owner == "bot") {
+        gameBoard.position[index].owner = "bot";
+        gameBoard.position[index].control.textContent = "X";
+        gameBoard.position[index].control.style.color = "green";
+    }
+    else return;
+}
+
+// reset the game 
+function resetBoard(gameBoard, popup, reset) {
+    for (let i = 0; i < 9; i++) {
+        gameBoard.position[i].owner = "";
+        gameBoard.position[i].control.textContent = "";
+    }
+    popup.remove();
+    reset.remove();
 }
