@@ -12,12 +12,16 @@ body {
 }
 
 .board {
-    background-color: white;
+    background-color: rgb(226, 239, 35);
     border: 1px solid rgb(226, 239, 35);
     display: inline-grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
     gap: 1px;
+}
+
+.board div {
+    background-color: white;
 }
 
 .board div:hover {
