@@ -1,14 +1,12 @@
 // Create a class for lines
 class line {
     constructor(i1, i2, i3) {
-        this.i1 = i1;
-        this.i2 = i2;
-        this.i3 = i3;
+        this.i = [i1, i2, i3];
     }
     // calculate the number of squares of the prevalent
     value(gameBoard) {
         let cntPlayer = 0, cntBot = 0, cnt = 0;
-        let arr = [this.i1, this.i2, this.i3];
+        let arr = [this.i[0], this.i[1], this.i[2]];
         for (let j = 0; j < 3; j++) {
             if (gameBoard.position[arr[j]].owner == "player") cntPlayer++;
             else if (gameBoard.position[arr[j]].owner == "bot") cntBot++;
@@ -19,7 +17,7 @@ class line {
     // return the total number of filled square and the prevalent
     status(gameBoard) {
         let cntPlayer = 0, cntBot = 0;
-        let arr = [this.i1, this.i2, this.i3];
+        let arr = [this.i[0], this.i[1], this.i[2]];
         for (let j = 0; j < 3; j++) {
             if (gameBoard.position[arr[j]].owner == "player") cntPlayer++;
             if (gameBoard.position[arr[j]].owner == "bot") cntBot++;
@@ -54,9 +52,9 @@ const winDet = (() => {
     }
     // find the index of the blank squares
     function remainSquare(gameBoard, l, index) {
-        if (gameBoard.position[l[index].i1].owner.length == 0) return l[index].i1;
-        else if (gameBoard.position[l[index].i2].owner.length == 0) return l[index].i2;
-        else return l[index].i3;
+        if (gameBoard.position[l[index].i[0]].owner.length == 0) return l[index].i[0];
+        else if (gameBoard.position[l[index].i[1]].owner.length == 0) return l[index].i[1];
+        else return l[index].i[2];
     }
     // determining the end of the game
     let detFull = () => {
@@ -98,7 +96,7 @@ const winDet = (() => {
         }
         return altOpt;
     };
-    return {detFull, detAdvtg};
+    return {detFull, detAdvtg, row, col, diag};
 })();
 // create the game board
 const gameBoard = (function createBoard() {
@@ -120,20 +118,9 @@ const gameBoard = (function createBoard() {
             if (position[4].owner.length == 0) {
                 tickSquare("bot", 4, gameBoard);
             }
-            // take the four side squares for advantages
             else {
-                let strategy = true;
-                let diagSquareIndex = [0, 2, 6, 8];
-                for (let t = 0; t < 4; t++) {
-                    let designation = position[diagSquareIndex[t]].owner;
-                    if (designation.length == 0) {
-                        tickSquare("bot", diagSquareIndex[t], gameBoard);
-                        strategy = false;
-                        break;
-                    }
-                }
                     // random move when there aren't other choices
-                    if (strategy == true) {
+                    if (shamefulHardCode()) {
                     while (position[rand].owner.length != 0) {
                         rand = Math.floor(Math.random() * 9);
                     }
@@ -250,4 +237,48 @@ function resetBoard(gameBoard, popup, reset) {
     }
     popup.remove();
     reset.remove();
+}
+
+// Hard code for edge cases
+function shamefulHardCode() {
+    let strategy = true;
+    let OptimumSquareIndex1 = [0, 2, 6, 8];
+    let OptimumSquareIndex2 = [1, 3, 5, 7];
+    let designation1, designation2;
+    for (let t = 0; t < 4; t++) {
+        designation1 = gameBoard.position[OptimumSquareIndex1[t]];
+        if (designation1.owner == "player") {
+            for (let h = 0; h < 4; h++) {
+                designation2 = gameBoard.position[OptimumSquareIndex2[h]];
+                if (designation2.owner.length == 0) {
+                    tickSquare("bot", OptimumSquareIndex2[h], gameBoard);
+                    return false;
+                }
+            }
+        }
+        if (t == 3) {
+            for (let g = 0; g < 3; g++) {
+                if (winDet.row[g].status(gameBoard)[0] === null) continue;
+                if (winDet.row[g].status(gameBoard)[0] == 1) {
+                    for (let d = 0; d < 3; d++) {
+                        if (winDet.col[d].status(gameBoard)[0] === null) continue;
+                        if (winDet.col[d].status(gameBoard)[0] == 1) {
+                            const intersection = winDet.row[g].i.filter(element => winDet.col[d].i.includes(element));
+                            if (gameBoard.position[intersection].owner.length == 0) {
+                                tickSquare("bot", intersection, gameBoard);
+                                return false;
+                            }
+                        }
+                    }
+                }
+                for (let v = 0; v < 4; v++) {
+                    if (gameBoard.position[OptimumSquareIndex1[v]].owner.length == 0) {
+                        tickSquare("bot", OptimumSquareIndex1[v], gameBoard);
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    return true;
 }
