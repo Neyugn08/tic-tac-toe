@@ -241,20 +241,13 @@ function resetBoard(gameBoard, popup, reset) {
 
 // Hard code for edge cases
 function shamefulHardCode() {
-    let strategy = true;
     let OptimumSquareIndex1 = [0, 2, 6, 8];
     let OptimumSquareIndex2 = [1, 3, 5, 7];
-    let designation1, designation2;
+    let designation1;
     for (let t = 0; t < 4; t++) {
         designation1 = gameBoard.position[OptimumSquareIndex1[t]];
         if (designation1.owner == "player") {
-            for (let h = 0; h < 4; h++) {
-                designation2 = gameBoard.position[OptimumSquareIndex2[h]];
-                if (designation2.owner.length == 0) {
-                    tickSquare("bot", OptimumSquareIndex2[h], gameBoard);
-                    return false;
-                }
-            }
+            if (randomMove(OptimumSquareIndex2)) return false;
         }
         if (t == 3) {
             for (let g = 0; g < 3; g++) {
@@ -271,14 +264,26 @@ function shamefulHardCode() {
                         }
                     }
                 }
-                for (let v = 0; v < 4; v++) {
-                    if (gameBoard.position[OptimumSquareIndex1[v]].owner.length == 0) {
-                        tickSquare("bot", OptimumSquareIndex1[v], gameBoard);
-                        return false;
-                    }
-                }
+                if (randomMove(OptimumSquareIndex1)) return false;
             }
         }
     }
     return true;
+}
+
+function randomMove(arr) {
+    let cnt;
+    let len = arr.length;
+    for (let i = 0; i < len; i++) {
+        if (gameBoard.position[arr[i]].owner.length != 0) cnt++;
+    }
+    if (cnt != len) {
+        let v = Math.floor(Math.random() * len);
+        while (gameBoard.position[arr[v]].owner.length != 0) {
+            v = Math.floor(Math.random() * len);
+        }
+        tickSquare("bot", arr[v], gameBoard);
+        return true;
+    }
+    else return false;
 }
