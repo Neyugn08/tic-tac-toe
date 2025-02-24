@@ -3,6 +3,7 @@
 }
 
 body {
+    background-color: rgb(0, 0, 0);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -11,6 +12,8 @@ body {
 }
 
 .board {
+    background-color: white;
+    border: 1px solid rgb(226, 239, 35);
     display: inline-grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
@@ -22,7 +25,9 @@ body {
 }
 
 .title {
+    color: red;
     font-weight: 700;
+    font-size: 1.5rem;
 }
 
 .button:hover {

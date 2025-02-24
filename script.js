@@ -198,6 +198,7 @@ function announceWinner(winner) {
     popup.style.fontWeight = "700";
     popup.style.backgroundColor = "white";
     popup.style.border = "2px solid black";
+    popup.style.borderRadius = "5px";
     popup.style.display = "flex";
     popup.style.flexDirection = "column";
     popup.style.justifyContent = "center";
