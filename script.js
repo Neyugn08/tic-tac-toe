@@ -1,5 +1,55 @@
-// Create a class for lines
-class line {
+let body = document.querySelector("body");
+
+// set up the game mode option panel
+let gameMode = document.createElement("div");
+gameMode.style.backgroundColor = "white";
+gameMode.style.position = "absolute";
+gameMode.style.minWidth = "10em";
+gameMode.style.minHeight = "5em";
+gameMode.style.display = "flex";
+gameMode.style.gap = "3px";
+gameMode.style.flexDirection = "column";
+gameMode.style.justifyContent = "center";
+gameMode.style.alignItems = "center";
+
+// Some stylings
+let title = document.createElement("div");
+title.style.fontSize = "0.75em";
+title.textContent = "What do you want to play?";
+let container = document.createElement("div");
+container.style.display = "flex";
+container.style.justifyContent = "space-between";
+container.style.alignItems = "center";
+container.style.gap = "1em";
+let mode1 = document.createElement("button");
+mode1.textContent = "3 * 3";
+mode1.style.fontSize = "1em";
+let mode2 = document.createElement("button");
+mode2.textContent = "4 * 4";
+mode2.style.fontSize = "1em";
+
+mode1.addEventListener("click", () => {
+    gameMode.removeChild(container);
+    gameMode.removeChild(title);
+    body.removeChild(gameMode);
+    ticTacToe();
+});
+mode1.addEventListener("click", () => {
+    gameMode.removeChild(container);
+    gameMode.removeChild(title);
+    body.removeChild(gameMode);
+    connectFour;
+});
+
+container.appendChild(mode1);
+container.appendChild(mode2);
+gameMode.appendChild(title);
+gameMode.appendChild(container);
+body.appendChild(gameMode);
+
+let ticTacToe = () => {
+    // Create a class for lines
+    class line {
     constructor(i1, i2, i3) {
         this.i = [i1, i2, i3];
     }
@@ -287,15 +337,20 @@ function minimax(alpha, beta, side) {
         }
         return maxVal;
     }
-    else {
-        let minVal = Infinity;
-        for (let i of currentPositions) {
-            gameBoard.position[i].owner = "player";
-            minVal = Math.min(minVal, minimax(alpha, beta, "bot"));
-            beta = minVal;
-            gameBoard.position[i].owner = "";
-            if (beta <= alpha) break;
-        }
-        return minVal;
+        else {
+            let minVal = Infinity;
+            for (let i of currentPositions) {
+                gameBoard.position[i].owner = "player";
+                minVal = Math.min(minVal, minimax(alpha, beta, "bot"));
+                beta = minVal;
+                gameBoard.position[i].owner = "";
+                if (beta <= alpha) break;
+            }
+            return minVal;
+        }   
     }
+};
+
+let connectFour = {
+
 }
