@@ -65,7 +65,7 @@ const winDet = (() => {
         }
         return false;
     };
-    // decide the bot to block or to win
+    // These 2 functions decide the bot to block or to win
     function detWinBot(statusL, l, index) {
         if (statusL == null) return [null, null];
         if (statusL[0] == 2 && statusL[1] != null) {
@@ -75,7 +75,7 @@ const winDet = (() => {
         }
         return [null, null];
     };
-    let detAdvtg = () => {
+    let detAdvtg = (side) => {
         let altOpt = [null, null];
         for (let k = 0; k < 3; k++) {
             let statusRow = row[k].status(gameBoard);
@@ -87,11 +87,11 @@ const winDet = (() => {
             let tmp1 = detWinBot(statusRow, row, k);
             let tmp2 = detWinBot(statusCol, col, k);
             let tmp3 = detWinBot(statusDiag, diag, k);
-            if (tmp1[1] == "bot") return tmp1;
+            if (tmp1[1] == side) return tmp1;
             else if (tmp1[1] != null) altOpt = tmp1;
-            if (tmp2[1] == "bot") return tmp2;
+            if (tmp2[1] == side) return tmp2;
             else if (tmp2[1] != null) altOpt = tmp2;
-            if (k <= 1 && tmp3[1] == "bot") return tmp3;
+            if (k <= 1 && tmp3[1] == side) return tmp3;
             else if (k <= 1 && tmp3[1] != null) altOpt = tmp3;
         }
         return altOpt;
@@ -104,39 +104,20 @@ const gameBoard = (function createBoard() {
     const board = document.querySelector(".board");
     const position = new Array(9).fill(null);
     // bot plays
-    const botMove = (index) => {
-        if (spareSpace >= 9) return;
-        let rand = Math.floor(Math.random() * 9);
-        let advtg = winDet.detAdvtg();
+    const botMove = () => {
+        let advtg = winDet.detAdvtg("bot");
         // block or win if possible
-        if (advtg[1] == "bot" || advtg[1] == "player") {
-            tickSquare("bot", advtg[0], gameBoard);
-        }
+        if (advtg[1] == "bot" || advtg[1] == "player") tickSquare("bot", advtg[0], gameBoard);
         // strategic moves when there is no danger
+        else if (position[4].owner.length == 0)  tickSquare("bot", 4, gameBoard);
         else {
-            // take the center for advantages
-            if (position[4].owner.length == 0) {
-                tickSquare("bot", 4, gameBoard);
-            }
-            else {
-                    // random move when there aren't other choices
-                    if (shamefulHardCode()) {
-                    while (position[rand].owner.length != 0) {
-                        rand = Math.floor(Math.random() * 9);
-                    }
-                    tickSquare("bot", rand, gameBoard);
-                }
-            }
+            // The best move available
+            let optimalMove = bestMove(savePositions());
+            console.log(optimalMove);
+            tickSquare("bot", optimalMove, gameBoard);
         } 
         spareSpace++;
-        if (winDet.detFull()) {
-            setTimeout(() => announceWinner(winDet.detFull()), 500);
-            spareSpace = 0;
-        }
-        else if (spareSpace >= 9) {
-            setTimeout(() => announceWinner("Tie"), 500);
-            spareSpace = 0;
-        }
+        if (gameTermi(spareSpace)) spareSpace = 0;
     };
 
     for (let i = 0; i < 9; i++) {
@@ -154,25 +135,29 @@ const gameBoard = (function createBoard() {
         position[i].control.style.alignItems = "center";
         board.appendChild(position[i].control);
         // Player plays
-        let tmp = i;
-        position[tmp].control.addEventListener("click", function(e) {
+        position[i].control.addEventListener("click", function(e) {
             if (e.target.textContent.length == 0) {
-                tickSquare("player", tmp, gameBoard);
+                tickSquare("player", i, gameBoard);
                 spareSpace++;
-                if (winDet.detFull()) {
-                    setTimeout(() => announceWinner(winDet.detFull()), 500);
-                    spareSpace = 0;
-                }
-                else if (spareSpace == 9) {
-                    setTimeout(() => announceWinner("Tie"), 500);
-                    spareSpace = 0;
-                }
-                else setTimeout(() => botMove(tmp), 100);
+                if (gameTermi(spareSpace)) spareSpace = 0;
+                else setTimeout(() => botMove(i), 100);
             };
         });
     }
-    return {board, position, spareSpace};
+    return {board, position};
 })();
+
+function gameTermi(spareSpace) {
+    if (winDet.detFull()) {
+        setTimeout(() => announceWinner(winDet.detFull()), 500);
+        return true;
+    }
+    else if (spareSpace == 9) {
+        setTimeout(() => announceWinner("Tie"), 500);
+        return true;
+    }
+    else return false;
+}
 
 function announceWinner(winner) {
     let body = document.querySelector("body");
@@ -239,51 +224,78 @@ function resetBoard(gameBoard, popup, reset) {
     reset.remove();
 }
 
-// Hard code for edge cases
-function shamefulHardCode() {
-    let OptimumSquareIndex1 = [0, 2, 6, 8];
-    let OptimumSquareIndex2 = [1, 3, 5, 7];
-    let designation1;
-    for (let t = 0; t < 4; t++) {
-        designation1 = gameBoard.position[OptimumSquareIndex1[t]];
-        if (designation1.owner == "player") {
-            if (randomMove(OptimumSquareIndex2)) return false;
-        }
-        if (t == 3) {
-            for (let g = 0; g < 3; g++) {
-                if (winDet.row[g].status(gameBoard)[0] === null) continue;
-                if (winDet.row[g].status(gameBoard)[0] == 1) {
-                    for (let d = 0; d < 3; d++) {
-                        if (winDet.col[d].status(gameBoard)[0] === null) continue;
-                        if (winDet.col[d].status(gameBoard)[0] == 1) {
-                            const intersection = winDet.row[g].i.filter(element => winDet.col[d].i.includes(element));
-                            if (gameBoard.position[intersection].owner.length == 0) {
-                                tickSquare("bot", intersection, gameBoard);
-                                return false;
-                            }
-                        }
-                    }
-                }
-                if (randomMove(OptimumSquareIndex1)) return false;
-            }
-        }
+function savePositions() {
+    let originalPosition = [];
+    for (let i = 0; i < 9; i++) {
+        if (gameBoard.position[i].owner.length == 0) originalPosition.push(i);
     }
-    return true;
+    return originalPosition;
 }
 
-function randomMove(arr) {
-    let cnt;
-    let len = arr.length;
-    for (let i = 0; i < len; i++) {
-        if (gameBoard.position[arr[i]].owner.length != 0) cnt++;
-    }
-    if (cnt != len) {
-        let v = Math.floor(Math.random() * len);
-        while (gameBoard.position[arr[v]].owner.length != 0) {
-            v = Math.floor(Math.random() * len);
+// Minimax algorithm
+function bestMove(currentPositions) {
+    let optimalMove;
+    let optimalVal = -Infinity;
+    for (let i of currentPositions) {
+        gameBoard.position[i].owner = "bot";
+        let val = minimax(-Infinity, Infinity, "player"); // FIXED: Start with "player"
+        if (optimalVal < val) {
+            optimalVal = val;
+            optimalMove = i;
         }
-        tickSquare("bot", arr[v], gameBoard);
-        return true;
+        gameBoard.position[i].owner = "";
     }
-    else return false;
+    return optimalMove;
+}
+
+// Minimax algorithm
+function bestMove(currentPositions) {
+    let optimalMove;
+    let optimalVal = -Infinity;
+    for (let i of currentPositions) {
+        gameBoard.position[i].owner = "bot";
+        // This is the turn of the minimizer
+        let val = minimax(-Infinity, Infinity, "player");
+        if (optimalVal < val) {
+            optimalVal = val;
+            optimalMove = i;
+        }
+        gameBoard.position[i].owner = "";
+    }
+    return optimalMove;
+}
+
+// Using alpha-beta pruning technique
+function minimax(alpha, beta, side) {
+    let currentPositions = savePositions();
+    // Calculate the scores
+    let detFull = winDet.detFull();
+    if (detFull != false || currentPositions.length == 0) {
+        if (detFull == "player") return -1;
+        else if (detFull == "bot") return 1;
+        else return 0;
+    }
+    if (side == "bot") {
+        let maxVal = -Infinity;
+        // Searching for optimal moves from the position's children
+        for (let i of currentPositions) {
+            gameBoard.position[i].owner = "bot";
+            maxVal = Math.max(maxVal, minimax(alpha, beta, "player"));
+            alpha = maxVal; 
+            gameBoard.position[i].owner = "";
+            if (beta <= alpha) break;
+        }
+        return maxVal;
+    }
+    else {
+        let minVal = Infinity;
+        for (let i of currentPositions) {
+            gameBoard.position[i].owner = "player";
+            minVal = Math.min(minVal, minimax(alpha, beta, "bot"));
+            beta = minVal;
+            gameBoard.position[i].owner = "";
+            if (beta <= alpha) break;
+        }
+        return minVal;
+    }
 }
