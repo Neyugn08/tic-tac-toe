@@ -34,11 +34,11 @@ mode1.addEventListener("click", () => {
     body.removeChild(gameMode);
     ticTacToe();
 });
-mode1.addEventListener("click", () => {
+mode2.addEventListener("click", () => {
     gameMode.removeChild(container);
     gameMode.removeChild(title);
     body.removeChild(gameMode);
-    connectFour;
+    connectFour();
 });
 
 container.appendChild(mode1);
@@ -46,6 +46,56 @@ container.appendChild(mode2);
 gameMode.appendChild(title);
 gameMode.appendChild(container);
 body.appendChild(gameMode);
+
+let connectFour = () => {
+    const gameBoard = (function createBoard() {
+        let spareSpace = 0;
+        const board = document.querySelector(".board1");
+        const position = new Array(42).fill(null);
+        // bot plays
+        const botMove = () => {
+            
+        };
+    
+        for (let i = 0; i < 42; i++) {
+            // dynamically create squares
+            position[i] = {};
+            position[i].owner = "";
+            position[i].control = document.createElement("div");
+            position[i].control.setAttribute("class", "position");
+            position[i].control.style.width = "2rem";
+            position[i].control.style.height = "2rem";
+            position[i].control.style.fontSize = "1rem";
+            position[i].control.style.border = "0.5px solid black";
+            position[i].control.style.display = "flex";
+            position[i].control.style.justifyContent = "center";
+            position[i].control.style.alignItems = "center";
+            board.appendChild(position[i].control);
+            // Player plays
+            position[i].control.addEventListener("click", function(e) {
+                if (e.target.textContent.length == 0) {
+                    tickCircle("player", i, gameBoard, 35);
+                };
+            });
+        }
+        return {board, position};
+    })();
+
+    // tick a circle
+    function tickCircle(owner, index, gameBoard, bottom) {
+        index = index % 7 + bottom;
+        while (gameBoard.position[index].owner.length != 0 && index > 6) index -= 7;
+        if (owner == "player") {
+            gameBoard.position[index].control.style.backgroundColor = "red";
+            gameBoard.position[index].owner = "player";
+        }
+        else if (owner == "bot") {
+            gameBoard.position[index].owner = "bot";
+            gameBoard.position[index].control.style.backgroundColor = "black";
+        }
+        else return;
+    }
+};
 
 let ticTacToe = () => {
     // Create a class for lines
@@ -350,7 +400,3 @@ function minimax(alpha, beta, side) {
         }   
     }
 };
-
-let connectFour = {
-
-}
