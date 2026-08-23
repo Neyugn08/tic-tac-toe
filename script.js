@@ -2,6 +2,12 @@ import Line from "./line.js";
 const board = document.querySelector(".board");
 const body = document.querySelector("body");
 
+// Tracking information
+const urlParams = new URLSearchParams(window.location.search);
+const trafficSource = urlParams.get("utm_source") || document.referrer || "direct";
+const trafficMedium = urlParams.get("utm_medium") || "none";
+const trafficCampaign = urlParams.get("utm_campaign") || "none";
+
 // The game board is a NUMBER_OF_CELLS * NUMBER_OF_CELLS square
 const NUMBER_OF_CELLS = 3;
 // A player wins if their have WIN_CELLS cells forming a line 
@@ -11,6 +17,9 @@ const SQUARE_DIAGONALS = 2;
 class GameBoard {
     constructor() {
         this.emptyCells = NUMBER_OF_CELLS ** 2;
+        this.gameStartedAt = null;
+        this.gameMoves = 0;
+        this.gameCompleted = false;
         // Create an array representing the game board 
         this.cells = new Array(NUMBER_OF_CELLS ** 2);
         // Each cell having an index and a state
@@ -62,6 +71,18 @@ class GameBoard {
         }
         board.addEventListener("click", (e) => {
             if (e.target.className == "cell" && e.target.textContent.length == 0) {
+                // Track the start of an actual game
+                if (!this.gameStartedAt) {
+                    this.gameStartedAt = Date.now();
+                    if (typeof gtag === "function") {
+                        gtag("event", "game_started", {
+                            traffic_source: trafficSource,
+                            traffic_medium: trafficMedium,
+                            traffic_campaign: trafficCampaign
+                        });
+                    }
+                }
+                this.gameMoves++;
                 // Update DOM
                 this.tickDOMCell("player", e.target);
                 // Update internal data
@@ -109,6 +130,21 @@ class GameBoard {
         return null;
     }
     announceWinner(winner) {
+        // Track completion of an actual game
+        if (!this.gameCompleted && this.gameStartedAt) {
+            this.gameCompleted = true;
+            const duration = Math.round((Date.now() - this.gameStartedAt) / 1000);
+            if (typeof gtag === "function") {
+                gtag("event", "game_completed", {
+                    result: winner == "Tie" ? "tie" : winner,
+                    moves: this.gameMoves,
+                    duration_seconds: duration,
+                    traffic_source: trafficSource,
+                    traffic_medium: trafficMedium,
+                    traffic_campaign: trafficCampaign
+                });
+            }
+        }
         // Create a popup
         const popup = document.createElement("div");
         popup.setAttribute("class", "popup");
@@ -128,7 +164,13 @@ class GameBoard {
     }
     // Reset the game 
     reset() {
+        if (typeof gtag === "function") {
+            gtag("event", "game_reset");
+        }
         this.emptyCells = NUMBER_OF_CELLS ** 2;
+        this.gameStartedAt = null;
+        this.gameMoves = 0;
+        this.gameCompleted = false;
         for (let i = 0; i < this.cells.length; i++) {
             // Internal data reset
             this.cells[i].state = null;
@@ -152,6 +194,7 @@ class GameBoard {
         // Update internal data
         optimalCell.state = "bot";
         this.emptyCells--;
+        this.gameMoves++;
         // Determine the end of the game
         const winner = this.winner();
         if (winner) {
